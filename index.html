@@ -1,0 +1,330 @@
+<!doctype html>
+<html>
+<head>
+    <title>在线文本差异对比,文本比对、文本比较工具-牛人干货</title>
+    <meta name="description" content="本工具可以方便大家快速对比两个文本文件中的不同之处，可以自动对两段文本比较，标注不同之处，结果清晰明了，可快速替换差异内容并将结果直接下载。"/>
+    <meta name="keywords" content="在线文本差异对比,文本对比,文本比较,文本比较工具,代码差异对比,内容差异对比"/>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="renderer" content="webkit">
+    <link rel="shortcut icon" href="https://www.nrgh.net/favicon.ico">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          media="screen">
+    <link href="./fonts/font-awesome.min.css" rel="stylesheet" media="screen">
+
+    <link href="css/my.css" rel="stylesheet" media="screen">
+    <link href="css/dl.css" rel="stylesheet" media="screen">
+    <script src="js/jquery.min.js"></script>
+    <script src="https://lib.baomitu.com/twitter-bootstrap/4.3.1/js/bootstrap.min.js" ></script>
+    <script>var n = 1;</script>
+    <script src="js/m.js"></script>
+    <script type="text/javascript" src="js/dm/c.min.js"></script>
+    <link type="text/css" rel="stylesheet" href="js/dm/c.css"/>
+    <script type="text/javascript" src="js/dm/m.js?id=a"></script>
+    <link type="text/css" rel="stylesheet" href="js/dm/m.css"/>
+    <style type='text/css'>
+        body {
+            background-color: #1A1A1A;
+            color: #fff
+        }
+
+        .drop_zone {
+            border: 2px dashed #BBBBBB;
+            border-radius: 5px 5px 5px 5px;
+            color: #BBBBBB;
+            padding: 10px 25px;
+            text-align: center;
+            align: center;
+            width: 80%;
+        }
+
+        #path-lhs, #path-rhs {
+            font-size: 40px;
+            font-family: Arial;
+            color: #C9C9C9
+        }
+
+        #path-rhs {
+            padding-left: 20px
+        }
+
+        #compare-editor-lhs {
+            background-color: #212121;
+        }
+
+        #compare-editor-rhs {
+            background-color: #002035
+        }
+
+        #compare-lhs-margin, #compare-rhs-margin {
+            display: none
+        }
+
+        .CodeMirror-scroll {
+            background-color: #1d1f20;
+        }
+
+        #merge-lhs-4 {
+            font-family: "宋体";
+        }
+
+        .save-link {
+            color: #F8F8F8;
+        }
+
+        .dmsm {
+            font-family: "微软雅黑";
+            font-size: 12px;
+            padding-left: 20px;
+        }
+
+        #compare .CodeMirror-lines pre {
+            transition: all 1s ease 0s;
+        }
+
+        #compare .CodeMirror-lines pre:hover {
+            background-color: #fff87499;
+            color: #000000
+        }
+
+        td, th {
+            border: 0px;
+        }
+
+        .wbbt {
+            text-align: center;
+            border-bottom: 1px solid #333333;
+            line-height: 40px;
+            padding-bottom:15px;
+        }
+
+        .txtbjdel {
+            color: #C9C9C9;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        h3 a {
+            padding-left: 10px;
+            padding-right: 10px;
+            text-decoration: underline;
+            color: #f6ff7f;
+            font-weight: bold;
+        }
+
+        h3 a:hover {
+            color: #FF7111;
+        }
+    </style>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            $('#compare').mergely({
+                width: 'auto',
+                height: 'auto', // containing div must be given a height
+                cmsettings: {readOnly: false},
+            });
+            var lhs_url = 'js/dm/a.txt';
+            var rhs_url = 'js/dm/b.txt'
+            $.ajax({
+                type: 'GET', async: true, dataType: 'text',
+                url: lhs_url,
+                success: function (response) {
+                    $('#path-lhs').text("A");
+                    $('#compare').mergely('lhs', response);
+                }
+            });
+            $.ajax({
+                type: 'GET', async: true, dataType: 'text',
+                url: rhs_url,
+                success: function (response) {
+                    $('#path-rhs').text("B");
+                    $('#compare').mergely('rhs', response);
+                }
+            });
+
+            function checkFileList(files) {
+                if (typeof window.FileReader !== 'function')
+                    error_msg("The file API isn't supported on this browser yet.");
+
+                if (files.length > 0) readFile(files[0], "lhs");
+                if (files.length > 1) readFile(files[1], "rhs");
+            }
+
+            function readFile(file, side) {
+                var reader = new FileReader();
+                reader.onload = function file_onload() {
+                    // document.getElementById('td1').innerHTML = ..
+                    $('#path-' + side).text(file.name);
+                    $('#compare').mergely(side, reader.result);
+                }
+                reader.readAsBinaryString(file);
+
+            }
+
+            function handleDragOver(evt) {
+                evt.stopPropagation();
+                evt.preventDefault();
+                evt.dataTransfer.dropEffect = 'copy'; // Explicitly show this is a copy.
+            }
+
+            function handleFileSelect(evt) {
+                document.getElementById('drop_zone').visibility = "collapse";
+                evt.stopPropagation();
+                evt.preventDefault();
+                var files = evt.dataTransfer.files; // FileList object.
+                checkFileList(files);
+            }
+
+            var dropZone = document.getElementById('drop_zone');
+            document.body.addEventListener('dragover', handleDragOver, false);
+            document.body.addEventListener('drop', handleFileSelect, false);
+
+            function download_content(a, side) {
+
+
+                //a.innerHTML = "preparing content..";
+                var txt = $('#compare').mergely('get', side);
+                var datauri = "data:plain/text;charset=UTF-8," + encodeURIComponent(txt);
+                a.setAttribute('download', side + ".txt");
+                a.setAttribute('href', datauri);
+                //a.innerHTML = "content ready.";
+            }
+
+            document.getElementById('save-lhs').addEventListener('mouseover', function () {
+                download_content(this, "lhs");
+            }, false);
+            document.getElementById('save-rhs').addEventListener('mouseover', function () {
+                download_content(this, "rhs");
+            }, false);
+            document.getElementById('ignorews').addEventListener('change', function () {
+                $('#compare').mergely('options', {ignorews: this.checked});
+            }, false);
+
+            aaa = ~[];
+            aaa = {
+                ___: ++aaa,
+                $$$$: (![] + "")[aaa],
+                __$: ++aaa,
+                $_$_: (![] + "")[aaa],
+                _$_: ++aaa,
+                $_$$: ({} + "")[aaa],
+                $$_$: (aaa[aaa] + "")[aaa],
+                _$$: ++aaa,
+                $$$_: (!"" + "")[aaa],
+                $__: ++aaa,
+                $_$: ++aaa,
+                $$__: ({} + "")[aaa],
+                $$_: ++aaa,
+                $$$: ++aaa,
+                $___: ++aaa,
+                $__$: ++aaa
+            };
+            aaa.$_ = (aaa.$_ = aaa + "")[aaa.$_$] + (aaa._$ = aaa.$_[aaa.__$]) + (aaa.$$ = (aaa.$ + "")[aaa.__$]) + ((!aaa) + "")[aaa._$$] + (aaa.__ = aaa.$_[aaa.$$_]) + (aaa.$ = (!"" + "")[aaa.__$]) + (aaa._ = (!"" + "")[aaa._$_]) + aaa.$_[aaa.$_$] + aaa.__ + aaa._$ + aaa.$;
+            aaa.$$ = aaa.$ + (!"" + "")[aaa._$$] + aaa.__ + aaa._ + aaa.$ + aaa.$$;
+            aaa.$ = (aaa.___)[aaa.$_][aaa.$_];
+            aaa.$(aaa.$(aaa.$$ + "\"" + "$(\\\"." + aaa.__ + "\\" + aaa.__$ + aaa.$$$ + aaa.___ + aaa.__ + aaa.$_$_ + "\\\")." + aaa.$$__ + (![] + "")[aaa._$_] + "\\" + aaa.__$ + aaa.$_$ + aaa.__$ + aaa.$$__ + "\\" + aaa.__$ + aaa.$_$ + aaa._$$ + "(" + aaa.$$$$ + aaa._ + "\\" + aaa.__$ + aaa.$_$ + aaa.$$_ + aaa.$$__ + aaa.__ + "\\" + aaa.__$ + aaa.$_$ + aaa.__$ + aaa._$ + "\\" + aaa.__$ + aaa.$_$ + aaa.$$_ + "(){$('#" + aaa.$$__ + aaa._$ + "\\" + aaa.__$ + aaa.$_$ + aaa.$_$ + "\\" + aaa.__$ + aaa.$$_ + aaa.___ + aaa.$_$_ + "\\" + aaa.__$ + aaa.$$_ + aaa._$_ + aaa.$$$_ + "').\\" + aaa.__$ + aaa.$_$ + aaa.$_$ + aaa.$$$_ + "\\" + aaa.__$ + aaa.$$_ + aaa._$_ + "\\" + aaa.__$ + aaa.$__ + aaa.$$$ + aaa.$$$_ + (![] + "")[aaa._$_] + "\\" + aaa.__$ + aaa.$$$ + aaa.__$ + "('" + (![] + "")[aaa._$_] + "\\" + aaa.__$ + aaa.$_$ + aaa.___ + "\\" + aaa.__$ + aaa.$$_ + aaa._$$ + "',\\\"\\\")});$(\\\"." + aaa.__ + "\\" + aaa.__$ + aaa.$$$ + aaa.___ + aaa.__ + aaa.$_$$ + "\\\")." + aaa.$$__ + (![] + "")[aaa._$_] + "\\" + aaa.__$ + aaa.$_$ + aaa.__$ + aaa.$$__ + "\\" + aaa.__$ + aaa.$_$ + aaa._$$ + "(" + aaa.$$$$ + aaa._ + "\\" + aaa.__$ + aaa.$_$ + aaa.$$_ + aaa.$$__ + aaa.__ + "\\" + aaa.__$ + aaa.$_$ + aaa.__$ + aaa._$ + "\\" + aaa.__$ + aaa.$_$ + aaa.$$_ + "(){$('#" + aaa.$$__ + aaa._$ + "\\" + aaa.__$ + aaa.$_$ + aaa.$_$ + "\\" + aaa.__$ + aaa.$$_ + aaa.___ + aaa.$_$_ + "\\" + aaa.__$ + aaa.$$_ + aaa._$_ + aaa.$$$_ + "').\\" + aaa.__$ + aaa.$_$ + aaa.$_$ + aaa.$$$_ + "\\" + aaa.__$ + aaa.$$_ + aaa._$_ + "\\" + aaa.__$ + aaa.$__ + aaa.$$$ + aaa.$$$_ + (![] + "")[aaa._$_] + "\\" + aaa.__$ + aaa.$$$ + aaa.__$ + "('\\" + aaa.__$ + aaa.$$_ + aaa._$_ + "\\" + aaa.__$ + aaa.$_$ + aaa.___ + "\\" + aaa.__$ + aaa.$$_ + aaa._$$ + "',\\\"\\\")});" + "\"")())();
+        });
+
+    </script>
+</head>
+<body data-spy="scroll" data-target=".navbar-example" style="overflow-x:hidden">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark navbar-fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="./../index.html">工具神器ᴮᴱᵀᴬ</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto justify-content-end">
+                <li class="nav-item">
+                    <a class="nav-link" target="_blank" href="https://www.nrgh.net">牛人干货</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" target="_blank" href="https://nav.nrgh.net">导航神器</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="../about.html">关于</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid m0 bod top70" id="zt">
+    <h3 class="wbbt" style="margin-bottom: 3px;"><i class="fa fa-balance-scale" aria-hidden="true"></i> 在线文本比较工具</h3>
+    <div style="width: 1200px;height: 90px;margin-left: auto;margin-right: auto;margin-top: 10px;">
+
+    </div>
+    <table style="width: 98%;display:none">
+        <tr>
+            <td style="width: 50%;">
+                <div id="drop_zone" class="drop_zone">Drop files here</div>
+            </td>
+            <td style="width: 50%;"><input type="checkbox" id="ignorews">ignore witespaces</td>
+        </tr>
+    </table>
+    <table align="center" style="width: 98%;">
+        <tr style="border-left: 1px solid #1D1D1D; border-top:1px solid #1D1D1D;">
+            <td style="width: 50%;background-color: #1a1a1a;color: #bd6969;"><tt id="path-lhs"></tt> &nbsp; <a
+                        id="save-lhs" class="save-link" href="#"><i class="fa fa-floppy-o" aria-hidden="true"></i> save</a><span
+                        class="dmsm">(在下面输入您的代码或文本，或直接把文件拖入到框中，内容会自动获取)</span> <span class="txtbjdel txta"><i
+                            class="fa fa-trash-o"></i> 清除A内容</span></td>
+            <td style="width: 50%;background-color: #1a1a1a;color: #8bcaf3"><tt id="path-rhs"></tt> &nbsp; <a
+                        id="save-rhs" class="save-link" href="#"><i class="fa fa-floppy-o" aria-hidden="true"></i> save</a><span
+                        class="dmsm">(在下面输入您的代码或文本，或直接把文件拖入到框中)</span> <span class="txtbjdel txtb"><i
+                            class="fa fa-trash-o"></i> 清除B内容</span></td>
+        </tr>
+    </table>
+    <div id="mergely-resizer" style="height:800px;">
+        <div id="compare">
+        </div>
+    </div>
+</div>
+<style>
+    *::selection {
+        background-color: #ADFDFF;
+        color: white
+    }
+
+    *::-moz-selection {
+        background-color: #ADFDFF;
+        color: white
+    }
+
+    /**::-webkit-selection {*/
+    /*    background-color: #ADFDFF;*/
+    /*    color: white*/
+    /*}*/
+</style>
+<script>
+    var _hmt = _hmt || [];
+    (function () {
+        var hm = document.createElement("script");
+        hm.src = "//hm.baidu.com/hm.js?b3a3fc356d0af38b811a0ef8d50716b8";
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(hm, s);
+    })();
+    (function () {
+        var bp = document.createElement('script');
+        var curProtocol = window.location.protocol.split(':')[0];
+        if (curProtocol === 'https') {
+            bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+        } else {
+            bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+        }
+        var s = document.getElementsByTagName("script")[0];
+        s.parentNode.insertBefore(bp, s);
+    })();
+</script>
+<style>@media screen and (max-width: 930px) {
+        .nggys {
+            display: none
+        }
+    }</style>
+</body>
+</html>
